@@ -7,7 +7,7 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import StratifiedKFold
 
 def main():
-    df = get_training_label_wavfilename(fullset = True)
+    df = get_training_label_wavfilename(fullset = False)#True
     np.random.seed(SEED)
     df = shuffle(df)
     splitter = StratifiedKFold(n_splits = NUM_FOLDS, shuffle = True, random_state = 2014)

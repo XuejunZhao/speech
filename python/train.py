@@ -6,10 +6,12 @@ import sys
 import os
 from util import *
 from datetime import datetime
+import tensorflow as tf
 from keras.callbacks import *
 from keras.utils import plot_model
+import noise_keras 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
+NUM_TRAINING_IMAGES=5274
 
 def main(dataset, model_arch, model_size, batch_size):
     MODEL_NAME = "d-{}_m-{}_s-{}".format(dataset, model_arch, model_size)
@@ -25,6 +27,9 @@ def main(dataset, model_arch, model_size, batch_size):
     train_meta = np.zeros((df.shape[0], 31))
     input_shape = X[0].shape
 
+    # priv_accountant = noise_keras.AmortizedAccountant(NUM_TRAINING_IMAGES)
+    # gaussian_sanitizer = noise_keras.AmortizedGaussianSanitizer(priv_accountant)
+
     print("========== input shape is : {} ===========".format(input_shape))
     folds = get_folds()
     num_folds = len(folds)
@@ -36,15 +41,21 @@ def main(dataset, model_arch, model_size, batch_size):
 
         model = model_builder(input_shape)
         #bug 
-        initial_lr = K.eval(model.optimizer.lr)
+        #noise optimizer
+        # initial_lr = K.eval(model.optimizer.lr)
+        # initial_lr = K.eval(model.optimizer.learning_rate)
+        initial_lr = 0.005
 
         if i == 0:
             print("------------- SUMMARY OF MODEL -------------")
-            print(model.summary())
-            plot_model(model, to_file=OUT_DIR + 'model.png')
+            #print(model.summary())
+            # plot_model(model, to_file=OUT_DIR + 'model.png')
             print("--------------------------------------------")
         print("========= fitting {} th model {} =========".format(i + 1, datetime.now().strftime("%H:%M:%S")))
+
+        
         train_data_generator = batch_generator(X_train, y_train, batch_size=batch_size, task='train')
+
         validation_data_generator = batch_generator(X_valid, y_valid,  batch_size=batch_size, task='train')
         # if model_arch == '1dcnn':
         #     train_data_generator = batch_generator(X_train, y_train, batch_size=batch_size, task='train',
@@ -56,16 +67,17 @@ def main(dataset, model_arch, model_size, batch_size):
             epochs = 65535,
             validation_data = validation_data_generator,
             validation_steps = np.ceil(X_valid.shape[0] / batch_size).astype(int),
-            callbacks = [
-                ReduceLROnPlateau(monitor = 'val_loss', factor = 0.2, patience = 5, min_lr = max(0.00001, initial_lr / 1000.0), verbose = 1),
-                # TensorBoard(log_dir="logs/{}_model_{}".format(MODEL_NAME, i), histogram_freq=0, write_graph=True, write_images=True),
-                # CMCallback(X_valid, y_valid, fullset = True, batch_szie = batch_size),
-                EarlyStopping(monitor = 'val_loss', patience = 15, verbose = 1),
-                ModelCheckpoint(filepath='{}model_checkpoint_fold_{}.hdf5'.format(OUT_DIR, i), monitor='val_loss',
-                                save_best_only=True, save_weights_only=True, mode='min')
-                ],
-            verbose = 1
+            # callbacks = [
+            #     ReduceLROnPlateau(monitor = 'val_loss', factor = 0.2, patience = 5, min_lr = max(0.00001, initial_lr / 1000.0), verbose = 1),
+            #     # TensorBoard(log_dir="logs/{}_model_{}".format(MODEL_NAME, i), histogram_freq=0, write_graph=True, write_images=True),
+            #     # CMCallback(X_valid, y_valid, fullset = True, batch_szie = batch_size),
+            #     EarlyStopping(monitor = 'val_loss', patience = 15, verbose = 1),
+            #     ModelCheckpoint(filepath='{}model_checkpoint_fold_{}.hdf5'.format(OUT_DIR, i), monitor='val_loss',
+            #                     )
+            #     ],
+            # verbose = 0 #1
         )
+        #save_best_only=True, save_weights_only=True, mode='min'
 
         nb_epochs.append(len(history.epoch))
         train_acc.append(history.history['categorical_accuracy'][-1])

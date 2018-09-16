@@ -29,7 +29,8 @@ test_data_path=train_audio_path
 # train_audio_path="../input/train/audio"
 # test_data_path="../input/test/audio"
 
-labels=["up", "down", "go", "stop", "left", "right", "on", "off","yes", "no", "silence", "unknown"]
+labels=["no", "silence", "unknown"]#5274
+# labels=["up", "down", "go", "stop", "left", "right", "on", "off","yes", "no", "silence", "unknown"]
 full_labels=[
     "up", "down", "go", "stop", "left", "right", "on", "off", "yes", "no", "silence",
     "bed", "bird", "cat", "dog", "eight", "five", "four", "happy", "house", "marvin",
@@ -66,7 +67,7 @@ def read_logspectrogram(filepath, nperseg=400, noverlap=100):
 
 def read_mfcc(filepath, num_components=10, n_fft=960, hop_length=320):
     #bug No such file or directory: '/Users/xuejun/Downloads/tensorflow-speech-recognition-challenge-master/python/bed/0c40e715_nohash_0.wav'
-    samples, sample_rate=librosa.load(filepath, sr=16000)
+    samples, sample_rate=librosa.load(filepath, sr=16000) #bug one
     if len(samples) > sample_rate:
         samples=samples[:sample_rate]
     else:
@@ -76,7 +77,7 @@ def read_mfcc(filepath, num_components=10, n_fft=960, hop_length=320):
 
 
 def read_logmelspectrogram(filepath, num_components=40, n_fft=400, hop_length=160):
-    samples, sample_rate=librosa.load(filepath, sr=16000)
+    samples, sample_rate=librosa.load(filepath, sr=16000) #bug
     if len(samples) > sample_rate:
         samples=samples[:sample_rate]
     else:
@@ -89,6 +90,7 @@ def read_logmelspectrogram(filepath, num_components=40, n_fft=400, hop_length=16
 def get_training_label_wavfilename(fullset=False):
     if not fullset:
         df=pd.read_csv('../input/train_label_file.csv')
+        print "train_label_file.csv"
     else:
         df=pd.read_csv('../input/full_train_label_file.csv')
     df.columns=['idx', 'filename', 'label']
@@ -129,11 +131,13 @@ def batch_generator(X, y=None, batch_size=128, task='train', noise_level=None, s
         X_batch = X[lower_bound:upper_bound, :].copy()
         if task == 'train' and y is not None:
             y_batch = y[lower_bound:upper_bound, :]
+
             if noise_level:
                 X_batch += (
                     noise_level * np.random.random() * X_batch.std(axis=1) *
                     np.random.randn(current_batch_size, 16000)
                 ).reshape(current_batch_size, 16000, 1).astype(int)
+                
             if shift_level:
                 X_batch = np.roll(
                     X_batch,
@@ -171,7 +175,7 @@ def batch_generator(X, y=None, batch_size=128, task='train', noise_level=None, s
 
 
 def prepare_data(dataset, dump=True):
-    df=get_training_label_wavfilename(fullset=True)
+    df=get_training_label_wavfilename(fullset=False)#changeTrue
     np.random.seed(SEED)
     df=shuffle(df)
     test_df=get_test_wavefilename()
@@ -230,7 +234,7 @@ def prepare_data(dataset, dump=True):
             X=np.array([
                 read_logmelspectrogram(file_path, n_fft=400, hop_length=160)
                 for file_path in df.apply(lambda row: train_audio_path + '/' + row['label'] + '/' + row['filename'],axis=1)
-                    ])
+                    ])#bug
             X_test=np.array([
                 read_logmelspectrogram(file_path, n_fft=400, hop_length=160)
                 # for file_path in test_df.apply(lambda row: test_data_path + '/' + row)

@@ -1,13 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Ren Zhang @ ryanzjlib dot gmail dot com
-
+import tensorflow as tf
 from keras.layers import *
 from keras.models import *
 from keras.optimizers import *
 from keras.regularizers import *
 from keras import backend as K
-
+import math
+import collections
+import numpy
+EpsDelta = collections.namedtuple("EpsDelta", ["spent_eps", "spent_delta"])
+OrderedDict = collections.OrderedDict
+from noise_keras import SGD_DP
+from noise_tf import DPGradientDescentOptimizer, AmortizedGaussianSanitizer, AmortizedAccountant
+labels = tf.placeholder(tf.float32, shape=(None, 31))
+# lr = tf.placeholder(tf.float32)
+# eps = tf.placeholder(tf.float32)
+# delta = tf.placeholder(tf.float32)
+global_step = tf.Variable(0, dtype=tf.int32, trainable=False,
+                              name="global_step")
+lr = tf.placeholder(tf.float32)
+eps = tf.placeholder(tf.float32)
+delta = tf.placeholder(tf.float32)
+eps = 1.0
+sigma = 4.0
+delta = 1e-5
 def build_arm_dnn_model(
         input_shape,
         num_layers = 3, layer_size = 144,
@@ -15,7 +33,7 @@ def build_arm_dnn_model(
         opt = Adam, initial_learning_rate = 0.0005,
         **kwargs
     ):
-
+    #para change lr eps delta gaussian_sanitizer sigma batches_per_lot
     inputs = Input(shape=input_shape)
     shaper = Flatten()(inputs)
     dense_model = Dense(units = layer_size, activation='relu')(shaper)
@@ -24,8 +42,22 @@ def build_arm_dnn_model(
         dense_model = Dense(units = layer_size, activation='relu')(dense_model)
         dense_model = Dropout(drop_out_rate)(dense_model)
     outputs = Dense(31, activation="softmax")(dense_model)
-    model = Model(inputs=inputs, outputs=outputs)
-    optimizer=opt(lr=initial_learning_rate)
+
+    # loss = tf.reduce_mean(tf.keras.backend.binary_crossentropy(labels, outputs))
+    # if with_privacy:
+    #   gd_op = DPGradientDescentOptimizer(
+    #       lr,
+    #       [eps, delta],
+    #       gaussian_sanitizer,
+    #       sigma=sigma,
+    #       batches_per_lot=FLAGS.batches_per_lot).minimize(
+    #           cost, global_step=global_step)
+    # else:
+    #   gd_op = tf.train.GradientDescentOptimizer(lr).minimize(cost)
+    model = Model(inputs=inputs, outputs=outputs)#model softmax_cross_entropy_with_logits compile
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant)
+    optimizer=DPGradientDescentOptimizer(lr=initial_learning_rate,eps_delta=[eps, delta],sanitizer=gaussian_sanitizer)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -189,7 +221,7 @@ def build_arm_crnn_model(
     permuter = Permute((1, 3, 2))(cnn_model)
     reshaper = Reshape((cnn_model_width, cnn_model_height * cnn_model_depth))(permuter)
 
-    rnn_model = rnn_cell(units = rnn_layer1_num_cells, return_sequences = True)(reshaper)
+    rnn_model = rnn_cell(units = rnn_layer1_num_cells, return_sequences = True)(reshaper)#bug
     if num_rnn_layers == 2:
         rnn_model = rnn_cell(units = rnn_layer2_num_cells, return_sequences = False)(rnn_model)
 
@@ -209,7 +241,7 @@ def build_arm_crnn_model(
     outputs = Dense(units = 31, activation="softmax")(dense_model)
 
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=opt(lr=initial_learning_rate)
+    optimizer=SGD_DP(lr=initial_learning_rate)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -599,9 +631,19 @@ def build_1dcnn_model(
         dense_model = BatchNormalization()(dense_model)
         dense_model = Dropout(drop_out_rate)(dense_model)
 
-    outputs = Dense(31, activation='softmax')(dense_model)
+    outputs = Dense(31, activation='softmax')(dense_model) #31
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=opt(lr=initial_learning_rate)
+    # optimizer=SGD_DP(lr=initial_learning_rate)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[1/600,False])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
+    # 1dcnnTFOptimizer()
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
