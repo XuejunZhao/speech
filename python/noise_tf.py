@@ -553,6 +553,7 @@ class AmortizedGaussianSanitizer(object):
           (tensor_name in self._options)):
         l2norm_bound, clip = self._options[tensor_name]
     if clip:
+      print "clip is true"
       x = utils.BatchClipByL2norm(x, l2norm_bound)
 
     if add_noise:

@@ -55,9 +55,18 @@ def build_arm_dnn_model(
     # else:
     #   gd_op = tf.train.GradientDescentOptimizer(lr).minimize(cost)
     model = Model(inputs=inputs, outputs=outputs)#model softmax_cross_entropy_with_logits compile
+    # priv_accountant = AmortizedAccountant(5274)
+    # gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant)
+    # optimizer=DPGradientDescentOptimizer(lr=initial_learning_rate,eps_delta=[eps, delta],sanitizer=gaussian_sanitizer)
     priv_accountant = AmortizedAccountant(5274)
-    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant)
-    optimizer=DPGradientDescentOptimizer(lr=initial_learning_rate,eps_delta=[eps, delta],sanitizer=gaussian_sanitizer)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -118,7 +127,16 @@ def build_arm_cnn_model(
     outputs = Dense(units = 31, activation="softmax")(dense_model)
 
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=opt(lr=initial_learning_rate)
+    # optimizer=opt(lr=initial_learning_rate)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -170,7 +188,16 @@ def build_arm_rnn_model(
     outputs = Dense(31, activation="softmax")(rnn_model)
 
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=opt(lr=initial_learning_rate)
+    # optimizer=opt(lr=initial_learning_rate)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -241,7 +268,16 @@ def build_arm_crnn_model(
     outputs = Dense(units = 31, activation="softmax")(dense_model)
 
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=SGD_DP(lr=initial_learning_rate)
+    # optimizer=SGD_DP(lr=initial_learning_rate)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -312,7 +348,16 @@ def build_arm_dscnn_model(
     cnn_model = GlobalAveragePooling2D()(cnn_model)
     outputs = Dense(units = 31, activation="softmax")(cnn_model)
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=opt(lr=initial_learning_rate)
+    # optimizer=opt(lr=initial_learning_rate)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -417,7 +462,16 @@ def build_gg4_model(
     else:
         outputs = Dense(31, activation="softmax")(cnn_model)
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=opt(lr=initial_learning_rate)
+    #optimizer=opt(lr=initial_learning_rate)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -522,7 +576,16 @@ def build_join_model_size_t(
 
     outputs = Dense(31, activation="softmax")(dense_model)
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=opt(lr=initial_learning_rate)
+    # optimizer=opt(lr=initial_learning_rate)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -580,7 +643,16 @@ def build_join_model_size_s(
 
     outputs = Dense(31, activation="softmax")(dense_model)
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=opt(lr=initial_learning_rate)
+    # optimizer=opt(lr=initial_learning_rate)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -635,7 +707,7 @@ def build_1dcnn_model(
     model = Model(inputs=inputs, outputs=outputs)
     # optimizer=SGD_DP(lr=initial_learning_rate)
     priv_accountant = AmortizedAccountant(5274)
-    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[1/600,False])
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
     eps = tf.placeholder(tf.float32)
     delta = tf.placeholder(tf.float32)
     optimizer=DPGradientDescentOptimizer(
@@ -768,7 +840,16 @@ def build_1dcnn_model_size_l(input_shape=(16000, 1)):
 
     outputs = Dense(31, activation='softmax')(dense_model)
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=Adadelta(lr=1)
+    # optimizer=Adadelta(lr=1)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -887,7 +968,16 @@ def build_1dcnn_model_size_xl(input_shape=(16000, 1)):
 
     outputs = Dense(31, activation='softmax')(dense_model)
     model = Model(inputs=inputs, outputs=outputs)
-    optimizer=Adadelta(lr=1)
+    # optimizer=Adadelta(lr=1)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 
@@ -967,7 +1057,16 @@ def build_resnet_model(
     flatten = Flatten()(avg_pool)
     outputs = Dense(units=31, kernel_initializer="he_normal", activation="softmax")(flatten)
     model = Model(inputs = inputs,outputs = outputs)
-    optimizer=opt(lr=initial_learning_rate)
+    # optimizer=opt(lr=initial_learning_rate)
+    priv_accountant = AmortizedAccountant(5274)
+    gaussian_sanitizer = AmortizedGaussianSanitizer(priv_accountant,[4/128,True])
+    eps = tf.placeholder(tf.float32)
+    delta = tf.placeholder(tf.float32)
+    optimizer=DPGradientDescentOptimizer(
+        learning_rate=initial_learning_rate,
+        eps_delta=[eps, delta],
+        sanitizer=gaussian_sanitizer,
+        sigma=sigma)
     model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=["categorical_accuracy"])
     return model
 

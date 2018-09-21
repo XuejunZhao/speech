@@ -64,7 +64,7 @@ def main(dataset, model_arch, model_size, batch_size):
         history = model.fit_generator(
             generator = train_data_generator,
             steps_per_epoch = np.ceil(X_train.shape[0] / batch_size).astype(int),
-            epochs = 65535,
+            epochs = 10,#65535
             validation_data = validation_data_generator,
             validation_steps = np.ceil(X_valid.shape[0] / batch_size).astype(int),
             # callbacks = [
